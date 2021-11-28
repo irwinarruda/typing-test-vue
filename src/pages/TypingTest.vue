@@ -24,7 +24,7 @@
                 </card-tab>
             </card-tabs>
         </c-box>
-        <TypingTestStatsModal />
+        <typing-test-stats-modal />
     </c-box>
 </template>
 <script lang="ts">
