@@ -1,12 +1,18 @@
 <template>
-    <c-box position="relative" width="100%" height="100%" minHeight="100vh">
+    <c-box
+        position="relative"
+        width="100%"
+        height="100%"
+        minHeight="100vh"
+        bgColor="black"
+    >
         <c-box
             position="absolute"
             bottom="50%"
             right="50%"
             transform="translate(50%, 50%)"
         >
-            <c-heading color="black" textAlign="center">
+            <c-heading color="white" textAlign="center">
                 Teste de Digitação
             </c-heading>
             <card-tabs>
@@ -18,6 +24,7 @@
                 </card-tab>
             </card-tabs>
         </c-box>
+        <TypingTestStatsModal />
     </c-box>
 </template>
 <script lang="ts">
@@ -27,6 +34,7 @@ import { CBox, CHeading } from '@chakra-ui/vue';
 import CardTabs from '@/components/organisms/CardTabs.vue';
 import CardTab from '@/components/organisms/CardTab.vue';
 import SpaceResetTab from '@/components/organisms/SpaceResetTab.vue';
+import TypingTestStatsModal from '@/components/organisms/TypingTestStatsModal.vue';
 
 export default Vue.extend({
     components: {
@@ -35,6 +43,7 @@ export default Vue.extend({
         CardTabs,
         CardTab,
         SpaceResetTab,
+        TypingTestStatsModal,
     },
 });
 </script>

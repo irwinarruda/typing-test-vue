@@ -16,6 +16,7 @@
                     borderColor="gray.400"
                     borderRadius="7px"
                     :_hover="{ borderColor: 'gray.500' }"
+                    :disabled="testIsOn"
                     v-model="options.duration"
                 >
                     <option value="10">10 seconds</option>
@@ -33,11 +34,23 @@
                     borderColor="gray.400"
                     borderRadius="7px"
                     :_hover="{ borderColor: 'gray.500' }"
+                    :disabled="testIsOn"
                     v-model="options.textStyle"
                 >
-                    <option value="common">Most common wordss</option>
+                    <option value="common">Most common words</option>
                 </c-select>
             </c-box>
+        </c-flex>
+        <c-flex justifyContent="center" marginTop="2" v-if="hasOverview">
+            <c-button
+                as="span"
+                size="xs"
+                userSelect="none"
+                cursor="pointer"
+                v-on:click="openModal"
+            >
+                Previous Attempt Overview
+            </c-button>
         </c-flex>
         <c-box
             width="100%"
@@ -52,13 +65,8 @@
         >
             <c-text as="span">{{ wordsText }}</c-text>
         </c-box>
-        <c-text
-            >Acertos {{ successes }}, Erros: {{ mistakes }}, tempo:
-            {{ this.timer }}</c-text
-        >
         <c-flex marginTop="6">
             <c-button
-                v-bind:rightIcon="timerIconVisibility"
                 width="8rem"
                 fontFamily="heading"
                 fontWeight="semibold"
@@ -67,6 +75,7 @@
                 border="1px solid"
                 borderColor="gray.500"
                 borderRadius="7px"
+                :rightIcon="timerIconVisibility"
                 v-on:click="toggleTimerVisibility"
             >
                 {{ timerIsVisible ? timer : '---' }}s
@@ -77,8 +86,8 @@
                 borderColor="gray.400"
                 borderRadius="7px"
                 :_hover="{ borderColor: 'gray.500' }"
+                :value="this.input"
                 v-on:input="this.onInputChange"
-                v-bind:value="this.input"
             />
             <c-icon-button
                 icon="add"
@@ -86,9 +95,10 @@
                 marginLeft="5"
                 color="white"
                 backgroundColor="blue.500"
-                :disabled="testIsOn"
+                borderRadius="7px"
                 :_hover="{ backgroundColor: 'blue.600' }"
                 :_active="{ backgroundColor: 'blue.600' }"
+                v-on:click="resetValues"
             />
         </c-flex>
     </c-box>
@@ -118,6 +128,7 @@ export default Vue.extend({
             timer: 60,
             timerIsVisible: true,
             testIsOn: false,
+            testCanStart: true,
             words: words,
             wordsTyped: -1,
             successes: 0,
@@ -129,29 +140,45 @@ export default Vue.extend({
         toggleTimerVisibility: function () {
             this.timerIsVisible = !this.timerIsVisible;
         },
+        setStats: function () {
+            const gameOverview = {
+                wpm:
+                    ((this.successes + this.mistakes) * 60) /
+                    Number(this.options.duration),
+                correctWords: this.successes,
+                wrongWords: this.mistakes,
+                accuracy: this.successes / (this.successes + this.mistakes),
+            };
+            this.$store.dispatch('setTypingTestOverview', gameOverview);
+        },
         resetValues: function () {
+            this.testIsOn = false;
             this.timer = Number(this.options.duration);
             this.wordsTyped = -1;
             this.successes = 0;
             this.mistakes = 0;
-            this.timeInterval = -1;
+            if (this.timeInterval) {
+                clearInterval(this.timeInterval);
+                this.timeInterval = -1;
+            }
+            this.input = '';
+            this.testCanStart = true;
+            this.$store.dispatch('resetTypingTestOverview');
         },
         startTyping: function () {
-            this.resetValues();
             this.testIsOn = true;
+            this.testCanStart = false;
             this.timeInterval = setInterval(() => {
                 this.timer = Math.round((this.timer - 0.01) * 1000) / 1000;
                 if (this.timer <= 0) {
                     clearInterval(this.timeInterval);
-                    this.timer = Number(this.options.duration);
+                    this.setStats();
                     this.testIsOn = false;
+                    this.openModal();
                 }
             }, 10);
         },
         handleSpacePress: function () {
-            if (this.wordsTyped === -1) {
-                this.testIsOn = true;
-            }
             this.wordsTyped++;
             if (this.input === this.words[this.wordsTyped]) {
                 this.successes++;
@@ -161,17 +188,23 @@ export default Vue.extend({
             this.input = '';
         },
         onInputChange: function (value: string) {
-            if (!this.testIsOn && value.length > 0) {
+            if (!this.testIsOn && this.testCanStart && value.length > 0) {
                 this.startTyping();
             }
-            if (value[value.length - 1] === ' ') {
+            if (value[value.length - 1] === ' ' && this.testIsOn) {
                 this.handleSpacePress();
             } else {
                 this.input = value;
             }
         },
+        openModal: function () {
+            this.$store.dispatch('statsModalOnOpen');
+        },
     },
     computed: {
+        hasOverview: function (): boolean {
+            return this.$store.state.typingTestOverview.wpm > 0;
+        },
         timerIconVisibility: function (): string {
             return this.timerIsVisible ? 'triangle-down' : 'triangle-up';
         },
@@ -179,6 +212,11 @@ export default Vue.extend({
             return this.words
                 .filter((_, index) => index > this.wordsTyped)
                 .join(' ');
+        },
+    },
+    watch: {
+        'options.duration': function (): void {
+            this.timer = Number(this.options.duration);
         },
     },
     components: {
