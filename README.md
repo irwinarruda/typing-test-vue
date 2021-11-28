@@ -1,24 +1,3 @@
-# typing-test
+# Typing Test App
 
-## Project setup
-```
-yarn install
-```
-
-### Compiles and hot-reloads for development
-```
-yarn serve
-```
-
-### Compiles and minifies for production
-```
-yarn build
-```
-
-### Lints and fixes files
-```
-yarn lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+I'm doing this application to learn multiple aspects of VueJs like how components work, how wtates within a component work, global state management and slots.
